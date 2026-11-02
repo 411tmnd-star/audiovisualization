@@ -96,8 +96,8 @@ void main() {
   float lam = max(dot(n, normalize(LIGHT)), 0.0);
 
   // Surface: dark slate, shaded by slope. This alone is the geometry's read.
-  vec3 col = mix(vec3(0.028, 0.036, 0.056), vec3(0.20, 0.25, 0.32), 0.04 + 0.96 * lam * lam);
-  col += vec3(0.020, 0.028, 0.040) * clamp(vH * 0.5, 0.0, 1.5);
+  vec3 col = mix(vec3(0.020, 0.032, 0.062), vec3(0.17, 0.25, 0.36), 0.04 + 0.96 * lam * lam);
+  col += vec3(0.018, 0.030, 0.052) * clamp(vH * 0.5, 0.0, 1.5);
 
   if (uDecor > 0.5) {
     float ab = clamp(vParts.x / 1.5, 0.0, 1.0);
@@ -116,14 +116,18 @@ void main() {
     col = mix(col, lineCol * (0.55 + 0.9 * uIllum), line * clamp(0.35 + 0.65 * strength, 0.0, 1.0));
 
     // The leading edge: where the newest row meets the camera.
-    float edge = 1.0 - smoothstep(0.0, 0.10, vAge);
-    col += vec3(0.30, 0.75, 0.85) * edge * (0.35 + 0.65 * uIllum);
+    float edge = 1.0 - smoothstep(0.0, 0.045, vAge);
+    col += vec3(0.20, 0.52, 0.62) * edge * (0.35 + 0.65 * uIllum);
 
     // An unrecorded span (a seek or a stall) lies flat and dim: the land does not invent what it did not hear.
     col = mix(col, col * vec3(0.55, 0.6, 0.7), vVoid);
 
-    // Horizon: the distant land dissolves into the background colour.
-    col = mix(BG, col, 1.0 - smoothstep(0.62, 1.0, vAge / WINDOW_S));
+    // Aerial perspective: the land takes on the haze colour with distance, then dissolves into the background at the horizon.
+    float dist01 = vAge / WINDOW_S;
+    col = mix(col, vec3(0.05, 0.09, 0.16), 0.22 * smoothstep(0.35, 0.90, dist01));
+    col = mix(BG, col, 1.0 - smoothstep(0.62, 1.0, dist01));
+    // The sides dissolve too, so the land reads as terrain that goes on and not as a slab with an outline.
+    col = mix(BG, col, 1.0 - smoothstep(0.80, 1.0, abs(vWorld.x) / HALF_W));
   }
   gl_FragColor = vec4(col, 1.0);
 }

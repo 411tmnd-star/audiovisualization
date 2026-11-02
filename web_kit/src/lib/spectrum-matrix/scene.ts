@@ -20,11 +20,11 @@ export const WIDTH = 26;
 export const SPACING = 0.5;
 export const Z_FAR = -22;
 /** World height of a terrain value of 1. */
-export const H_MAX = 2.4;
+export const H_MAX = 1.5;
 const FOV = 36;
 const BASE_DISTANCE = 17;
-const BASE_ELEVATION = 0.34;
-const TARGET = new THREE.Vector3(0, 0.6, -6);
+const BASE_ELEVATION = 0.58;
+const TARGET = new THREE.Vector3(0, 0.3, -6);
 const SCENE_PUSH = 1.2;
 /** Half-width kept in view at the target depth, world units: the three lobes are always inside the canvas. */
 export const FIT_HALF_WIDTH = 9.5;

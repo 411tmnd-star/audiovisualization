@@ -15,6 +15,12 @@ const RAMP = /* glsl */ `
 vec3 matrixRamp(float s) {
   return mix(vec3(0.25, 0.78, 1.00), vec3(0.62, 0.50, 1.00), s);
 }
+// Height colour: deep blue in the valleys, cyan, violet, then a warm white at the crests, so the peaks carry the colour.
+vec3 heightRamp(float h, float s) {
+  vec3 c = mix(vec3(0.08, 0.30, 1.00), vec3(0.20, 0.82, 1.00), smoothstep(0.02, 0.30, h));
+  c = mix(c, matrixRamp(0.55 + 0.45 * s), smoothstep(0.28, 0.62, h));
+  return mix(c, vec3(1.00, 0.90, 1.00), smoothstep(0.85, 1.00, h) * 0.60);
+}
 `;
 
 /** Shared by the surface and the lines. `aRow` is the row's age (0 newest, at the far end); `uFrac` the fraction scrolled. */
@@ -46,9 +52,8 @@ ${RAMP}
 void main() {
   float far = smoothstep(0.02, 0.38, vD);
   // Brightness follows height strongly, so peaks carry the information and a loud signal does not wash the whole grid evenly.
-  float lum = (0.14 + 1.80 * vH) * (0.45 + 0.90 * uExposure) * far;
-  vec3 base = matrixRamp(0.6 * uColour);
-  vec3 col = mix(base, vec3(0.90, 0.97, 1.00), smoothstep(0.55, 1.0, vH));
+  float lum = (0.30 + 1.10 * vH) * (0.45 + 0.90 * uExposure) * far;
+  vec3 col = heightRamp(vH, uColour);
   gl_FragColor = vec4(col * lum * uGain, 1.0);
 }
 `;
@@ -63,7 +68,7 @@ varying float vD;
 ${RAMP}
 void main() {
   float far = smoothstep(0.02, 0.38, vD);
-  vec3 col = vec3(0.004, 0.010, 0.030) + matrixRamp(0.6 * uColour) * vH * 0.04 * (0.4 + uExposure);
+  vec3 col = vec3(0.004, 0.010, 0.030) + heightRamp(vH, uColour) * smoothstep(0.0, 0.5, vH) * 0.16 * (0.4 + uExposure);
   gl_FragColor = vec4(col, far);
 }
 `;

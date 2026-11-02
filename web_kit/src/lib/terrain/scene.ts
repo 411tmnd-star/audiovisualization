@@ -28,7 +28,7 @@ export const sceneStats = { created: 0, disposed: 0 };
 export const CONTOUR_STEP = 0.38;
 const FOV = 36;
 /** Fixed camera: above and in front of the near edge, looking down the land. */
-const TARGET = new THREE.Vector3(0, 0.2, -5.2);
+const TARGET = new THREE.Vector3(0, 0.2, -7.0);
 const EYE_DIR = new THREE.Vector3(0, 0.66, 0.75).normalize();
 const BASE_DISTANCE = 18.5;
 
