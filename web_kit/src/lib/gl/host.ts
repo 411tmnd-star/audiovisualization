@@ -13,6 +13,34 @@ import { describeGl, drawable, INITIAL_GL_STATE, MAX_PIXEL_RATIO, reduceGl, reso
 /** Module-level counts, so a test can check that every host created was also disposed. */
 export const hostStats = { created: 0, disposed: 0 };
 
+/** Releases waiting one microtask, by canvas. See `releaseContext`. */
+const pendingRelease = new WeakMap<object, { cancelled: boolean }>();
+
+/**
+ * Gives the browser its WebGL context back, one microtask after dispose. The canvas belongs to the consumer, and React StrictMode
+ * (Next's development mode) tears an effect down and re-runs it at once on the same canvas element. A context lost on teardown stays
+ * lost for that element, so the second mount would find no usable context. A host created on the same canvas before the microtask
+ * runs cancels the release and reuses the live context. A real unmount releases it a microtask later, as before. It is a single
+ * deferred call, not a timer or a loop.
+ */
+export function releaseContext(canvas: object, renderer: { forceContextLoss(): void }): void {
+  const job = { cancelled: false };
+  pendingRelease.set(canvas, job);
+  queueMicrotask(() => {
+    if (pendingRelease.get(canvas) === job) pendingRelease.delete(canvas);
+    if (!job.cancelled) renderer.forceContextLoss();
+  });
+}
+
+/** Cancels a release that is still waiting for this canvas. Returns whether there was one. */
+export function cancelRelease(canvas: object): boolean {
+  const job = pendingRelease.get(canvas);
+  if (!job) return false;
+  job.cancelled = true;
+  pendingRelease.delete(canvas);
+  return true;
+}
+
 export interface GlHostOptions {
   canvas: HTMLCanvasElement;
   /** Device-pixel-ratio cap. Defaults to MAX_PIXEL_RATIO. */
@@ -63,6 +91,8 @@ export class GlHost {
     this.motionQuery = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
     this.reduced = this.motionQuery?.matches ?? false;
 
+    // A host that was just disposed on this canvas (StrictMode's second mount) has not given its context up yet: keep it.
+    cancelRelease(this.canvas);
     try {
       this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
     } catch {
@@ -142,7 +172,7 @@ export class GlHost {
     this.motionQuery = null;
     if (this.renderer) {
       this.renderer.dispose();
-      this.renderer.forceContextLoss();
+      releaseContext(this.canvas, this.renderer);
       this.renderer = null;
       hostStats.disposed++;
     }

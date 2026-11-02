@@ -1,3 +1,4 @@
+import { punchOf } from "../audio/shaping";
 import { SCENE_STATES, clamp01, type AudioFeatureFrame, type SceneState } from "../pipeline/contract";
 
 /**
@@ -34,6 +35,10 @@ export const REDUCED_MOTION = 0.35;
  * so the Accretion layer does not depend on Squall's module.
  */
 export const SILENCE_RMS = 0.04;
+/** How much of each band's transient is added to the signal it drives. */
+export const PUNCH_HORIZON = 0.3;
+export const PUNCH_TURB = 0.45;
+export const PUNCH_DETAIL = 0.5;
 
 export interface AccretionParams {
   /** Central-body swell (bass). The renderer scales the body by 1 + k * horizon. */
@@ -81,16 +86,19 @@ export function toAccretionParams(f: AudioFeatureFrame, reduced: boolean): Accre
 
   // Jets and flares are pulses, so they are removed in silence and under reduced motion.
   const pulses = !calm && !reduced;
+  // Per-band transients (see audio/shaping.ts): the ring flares on a kick, the disk surges on a mid hit, its fine detail flickers on a high one.
+  const pn = punchOf(f);
+  const k = pulses ? 1 : 0;
 
   const scene = (SCENE_STATES as readonly string[]).includes(f.currentSceneState) ? f.currentSceneState : "rest";
 
   return {
-    horizon: bass,
-    rimGlow: unit(REST_GLOW + (1 - REST_GLOW) * bass),
-    diskSpeed: unit((REST_SPIN + (1 - REST_SPIN) * mid) * motion),
-    diskTurbulence: unit(mid * motion),
+    horizon: unit(bass + PUNCH_HORIZON * pn.bass * k),
+    rimGlow: unit(REST_GLOW + (1 - REST_GLOW) * unit(bass + 0.4 * pn.bass * k)),
+    diskSpeed: unit((REST_SPIN + (1 - REST_SPIN) * unit(mid + 0.3 * pn.mid * k)) * motion),
+    diskTurbulence: unit((mid + PUNCH_TURB * pn.mid * k) * motion),
     diskColour: mid,
-    detail: unit(high * motion),
+    detail: unit((high + PUNCH_DETAIL * pn.high * k) * motion),
     exposure: rms,
     jet: pulses ? unit(f.bassHit) : 0,
     flare: pulses && f.beatDetected === true ? unit(f.onsetStrength) : 0,

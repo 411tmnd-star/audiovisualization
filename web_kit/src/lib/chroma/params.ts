@@ -1,3 +1,4 @@
+import { punchOf } from "../audio/shaping";
 import { clamp01, type AudioFeatureFrame } from "../pipeline/contract";
 
 /**
@@ -25,11 +26,18 @@ export interface ChromaParams {
   reduced: boolean;
 }
 
+/** How much of each band's transient is added to the signal it drives (see audio/shaping.ts). Off under reduced motion. */
+export const PUNCH_BASS = 0.3;
+export const PUNCH_MID = 0.4;
+export const PUNCH_HIGH = 0.5;
+
 export function toChromaParams(f: AudioFeatureFrame, reduced: boolean): ChromaParams {
+  const pn = punchOf(f);
+  const k = reduced || f.isPlaying !== true ? 0 : 1;
   return {
-    bass: clamp01(f.bass),
-    mid: clamp01(f.mid),
-    high: clamp01(f.high),
+    bass: clamp01(f.bass + PUNCH_BASS * pn.bass * k),
+    mid: clamp01(f.mid + PUNCH_MID * pn.mid * k),
+    high: clamp01(f.high + PUNCH_HIGH * pn.high * k),
     hit: clamp01(f.bassHit),
     rms: clamp01(f.rmsEnergy),
     onset: f.beatDetected === true,

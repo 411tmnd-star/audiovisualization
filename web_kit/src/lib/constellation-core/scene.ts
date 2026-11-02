@@ -28,6 +28,10 @@ export const STAR_COUNT = 1500;
 const FOV = 36;
 const BASE_DISTANCE = 14;
 /** The camera moves this much closer as the music builds and peaks. */
+/** How far each audio signal moves its visual: core size, camera distance, orb size (fractions). */
+const CORE_SWELL = 0.14;
+const CAMERA_BREATH = 0.03;
+const ORB_SHIMMER = 0.22;
 const SCENE_PUSH = 1.5;
 const BASE_ELEVATION = 0.35;
 /** The outer ring (radius 6) plus perspective margin must fit the canvas width: half-width kept in view, world units. */
@@ -61,7 +65,7 @@ export class ConstellationCoreScene {
   private readonly core: THREE.Mesh;
   private readonly halo: THREE.Mesh;
   private readonly strip: THREE.Mesh;
-  private readonly orbs: Array<{ mesh: THREE.Mesh; ring: number; base: number }> = [];
+  private readonly orbs: Array<{ mesh: THREE.Mesh; ring: number; base: number; size: number }> = [];
   private readonly ringUniforms: Uniforms[] = [];
   private readonly coreUniforms: Uniforms;
   private readonly orbUniforms: Uniforms;
@@ -128,10 +132,11 @@ export class ConstellationCoreScene {
       group.add(ribbon);
       for (let k = 0; k < ORBS_PER_RING[i]; k++) {
         const orb = new THREE.Mesh(orbGeo, orbMat);
-        orb.scale.setScalar(ORB_SIZES[orbIndex % ORB_SIZES.length]);
+        const size = ORB_SIZES[orbIndex % ORB_SIZES.length];
+        orb.scale.setScalar(size);
         orb.renderOrder = 1;
         group.add(orb);
-        this.orbs.push({ mesh: orb, ring: i, base: (k / ORBS_PER_RING[i]) * Math.PI * 2 + i * 1.3 });
+        this.orbs.push({ mesh: orb, ring: i, base: (k / ORBS_PER_RING[i]) * Math.PI * 2 + i * 1.3, size });
         orbIndex++;
       }
       this.rings.push(group);
@@ -205,13 +210,14 @@ export class ConstellationCoreScene {
     if (this.disposed) return;
     const az = a.drift + view.azimuth;
     const el = Math.min(1.2, Math.max(0, BASE_ELEVATION + view.elevation));
-    const dist = this.fitDistance - SCENE_PUSH * a.sceneLevel;
+    // The camera also breathes with the bass (a few percent), so a kick is felt by the whole frame and not only by the core.
+    const dist = (this.fitDistance - SCENE_PUSH * a.sceneLevel) * (1 - CAMERA_BREATH * a.swell);
     const ce = Math.cos(el);
     this.camera.position.set(dist * ce * Math.sin(az), dist * Math.sin(el), dist * ce * Math.cos(az));
     this.camera.lookAt(0, 0, 0);
 
-    // Bass swells the core slightly; the halo follows its edge.
-    const scale = 1 + 0.04 * a.swell;
+    // Bass swells the core; the halo follows its edge.
+    const scale = 1 + CORE_SWELL * a.swell;
     this.core.scale.setScalar(scale);
     this.halo.quaternion.copy(this.camera.quaternion);
     this.strip.rotation.y = Math.atan2(this.camera.position.x, this.camera.position.z);
@@ -230,6 +236,7 @@ export class ConstellationCoreScene {
       const R = RING_RADII[o.ring];
       // The ribbon is rotated -90 degrees about X, so ring angle `ang` maps to (cos, 0, -sin).
       o.mesh.position.set(R * Math.cos(ang), 0, -R * Math.sin(ang));
+      o.mesh.scale.setScalar(o.size * (1 + ORB_SHIMMER * a.shimmer));
     }
 
     const c = this.coreUniforms;

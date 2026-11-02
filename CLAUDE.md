@@ -21,5 +21,5 @@ checklist are in the specification below. Follow it. In short:
 
 ## Commands
 
-From `web_kit/`: `npx tsc --noEmit -p .` · `npm test` · `node preview/build.mjs <scene>` · `node preview/serve-gl.mjs 5354` (then `/matrix`, `/resonator`, `/score`, `/terrain`, `/chroma`) ·
-`node preview/<scene>-check.mjs` (headless Edge, real GPU). From the repo root: `python -m pytest`.
+From `web_kit/`: `npx tsc --noEmit -p .` · `npm test` · `node preview/build.mjs <scene>` · `node preview/serve-gl.mjs 5354` (then `/resonator`, `/score`, `/chroma`, and `/strict?scene=<name>` for any scene under React StrictMode) ·
+`node preview/<scene>-check.mjs` and `node preview/stage-check.mjs` (headless Edge, real GPU; the stage check needs `build.mjs strict` and a server, `STAGE_PORT`, default 5360). `node --import ./tests/resolve-ts.mjs --experimental-transform-types scripts/response-audit.ts [out.json] [raw]` measures how each scene's driving signals follow the sound on Detty (rise time, lag, range, transient fidelity); run it before and after any change to a scene's audio mapping. `web_kit/preview/dist/` is build output and is not tracked. From the repo root: `python -m pytest`.

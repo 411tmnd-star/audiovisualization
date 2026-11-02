@@ -198,7 +198,7 @@ export class AccretionScene {
     h.uRim.value = a.rimGlow;
     h.uExposure.value = a.exposure;
     h.uColour.value = a.diskColour;
-    h.uDiskBright.value = a.exposure * (0.6 + 0.4 * a.rimGlow);
+    h.uDiskBright.value = a.exposure * (0.4 + 0.6 * a.rimGlow);
     h.uRadius.value = scale;
 
     // A faint steady jet glow scales with loudness, so the jets stay part of the scene; impulses add to it, scaled to 0.7

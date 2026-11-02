@@ -12,10 +12,8 @@ const visuals = [
   { id: "squall", title: "Squall", tagline: "A weather map that listens: bass is pressure, highs are rain, hits are lightning.", shot: "designs/accretion/screenshots/04-squall-for-comparison.png" },
   { id: "accretion", title: "Accretion", tagline: "A black hole seen from the side. The disk turns with the music and bass hits fire the jets.", shot: "designs/accretion/screenshots/02-playing-jets.png" },
   { id: "core", title: "Constellation Core", tagline: "A glowing core with orbiting moons and rings. Bass swells it, mids speed the orbits, hits surge the beam.", shot: "designs/constellation-core/screenshots/02-playing.png" },
-  { id: "matrix", title: "Spectrum Matrix", tagline: "A wireframe terrain shaped by bass, mids and highs. Bass hits raise a ridge across it.", shot: "designs/spectrum-matrix/screenshots/02-playing.png" },
   { id: "resonator", title: "Resonator", tagline: "A glass orb and plasma heart inside concentric fluid ribbons. Bass pulses the core, highs ripple the outer rings, onsets flash the gold tracks.", shot: "designs/resonator/screenshots/02-playing.png" },
   { id: "score", title: "Score", tagline: "Music written as it plays: three lanes scroll right to left, bass in amber, mids in cyan, highs in violet, with detected onsets marked.", shot: "designs/score/screenshots/01-pattern.png" },
-  { id: "terrain", title: "Terrain with Memory", tagline: "The music becomes land. Bass raises ridges, mids roll valleys, highs add fine crests, and the terrain keeps what was played as it recedes.", shot: "designs/terrain/screenshots/terrain-08-detty-live.png" },
   { id: "chroma", title: "Chroma Field", tagline: "A volume of drifting colour and particles. Bass swells it, mids swirl it, highs shimmer and scatter colour, onsets burst through it.", shot: "designs/chroma/screenshots/chroma-07-detty-live.png" },
 ];
 

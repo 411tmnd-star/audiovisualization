@@ -96,9 +96,9 @@ export function stepChromaAnim(a: ChromaAnim, p: ChromaParams, dtS: number): Chr
 
   if (dt > 0) {
     // Envelopes: fast attack, slower release; the high band is the quickest.
-    a.bass = finite(follow(a.bass, p.bass, dt, 0.08, 0.45));
-    a.mid = finite(follow(a.mid, p.mid, dt, 0.12, 0.5));
-    a.high = finite(follow(a.high, p.high, dt, 0.04, 0.2));
+    a.bass = finite(follow(a.bass, p.bass, dt, 0.03, 0.25));
+    a.mid = finite(follow(a.mid, p.mid, dt, 0.05, 0.25));
+    a.high = finite(follow(a.high, p.high, dt, 0.02, 0.15));
     a.hit = finite(follow(a.hit, p.hit, dt, 0.02, 0.2));
     a.exposure = finite(follow(a.exposure, 0.55 + 0.45 * p.rms, dt, 0.15, 0.7));
 

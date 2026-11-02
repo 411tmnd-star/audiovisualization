@@ -15,8 +15,10 @@ import type { ResonatorParams } from "./params";
  */
 
 /** Envelope attack and release (seconds to about 63%). */
-export const ATTACK_S = 0.07;
-export const RELEASE_S = 0.45;
+export const ATTACK_S = 0.06;
+/** Attack for the ribbons, ripple and beads (the orb, its glow and the scene level keep ATTACK_S). */
+export const RIBBON_ATTACK_S = 0.03;
+export const RELEASE_S = 0.25;
 /** Under reduced motion every envelope rises slowly too, so no change is abrupt. */
 export const REDUCED_ATTACK_S = 0.35;
 /** Orb kick decay time constant. */
@@ -100,13 +102,15 @@ export function stepResonatorAnim(a: ResonatorAnim, p: ResonatorParams, dtS: num
   a.time += dt;
 
   const att = reduced ? REDUCED_ATTACK_S : ATTACK_S;
+  const fast = reduced ? REDUCED_ATTACK_S : RIBBON_ATTACK_S;
+  // The orb keeps a fluid rise (its criteria: no one-frame jump over 0.25, a restrained swell); the ribbons and beads respond faster.
   a.swell = env(a.swell, p.swell, dt, att);
   a.glow = env(a.glow, p.glow, dt, att);
-  a.rise = env(a.rise, p.rise, dt, att);
-  a.radial = env(a.radial, p.radial, dt, att);
-  a.ripple = env(a.ripple, p.ripple, dt, att);
-  a.rippleRate = env(a.rippleRate, p.rippleRate, dt, att);
-  a.beadSpeed = env(a.beadSpeed, p.beadSpeed, dt, att);
+  a.rise = env(a.rise, p.rise, dt, fast);
+  a.radial = env(a.radial, p.radial, dt, fast);
+  a.ripple = env(a.ripple, p.ripple, dt, fast);
+  a.rippleRate = env(a.rippleRate, p.rippleRate, dt, fast);
+  a.beadSpeed = env(a.beadSpeed, p.beadSpeed, dt, fast);
   a.exposure = env(a.exposure, p.exposure, dt, att);
   a.atmosphere = env(a.atmosphere, p.atmosphere, dt, att);
   a.bloom = env(a.bloom, p.bloom, dt, att);

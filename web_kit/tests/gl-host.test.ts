@@ -6,6 +6,8 @@ import { describe, it } from "node:test";
 
 import { MAX_PIXEL_RATIO, MIN_PIXEL_RATIO, INITIAL_GL_STATE, describeGl, drawSize, drawable, reduceGl, resolvePixelRatio, type GlEvent, type GlState } from "../src/lib/gl/state";
 
+import { cancelRelease, releaseContext } from "../src/lib/gl/host";
+
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "lib", "gl");
 const read = (f: string) => readFileSync(join(SRC, f), "utf8");
 
@@ -142,11 +144,67 @@ describe("ownership: the host has no loop of its own and releases what it adds",
     const dispose = host.slice(host.indexOf("dispose(): void"));
     assert.ok(dispose.includes("resizeObserver?.disconnect()"));
     assert.ok(dispose.includes("this.renderer.dispose()"));
-    assert.ok(dispose.includes("this.renderer.forceContextLoss()"));
+    // The context is released through releaseContext (deferred one microtask so a StrictMode remount can keep it); the helper itself
+    // is what calls forceContextLoss. Changed from asserting the literal call in dispose(); the behaviour is tested below.
+    assert.ok(dispose.includes("releaseContext(this.canvas, this.renderer)"));
+    assert.ok(host.includes("renderer.forceContextLoss()"));
     assert.ok(dispose.includes('this.dispatch({ type: "disposed" })'));
   });
 
   it("the host never removes the consumer's canvas", () => {
     assert.equal(/removeChild|\.remove\(\)|replaceWith/.test(host), false);
+  });
+});
+
+describe("context release is deferred so a same-canvas remount (React StrictMode) keeps its context", () => {
+  const fake = () => {
+    const r = { lost: 0, forceContextLoss() { this.lost++; } };
+    return r;
+  };
+  const tick = () => new Promise<void>((res) => queueMicrotask(res));
+
+  it("a real unmount still releases the context, one microtask later", async () => {
+    const canvas = {};
+    const r = fake();
+    releaseContext(canvas, r);
+    assert.equal(r.lost, 0, "not synchronous");
+    await tick();
+    assert.equal(r.lost, 1);
+  });
+
+  it("a host created on the same canvas before the microtask cancels the release", async () => {
+    const canvas = {};
+    const r = fake();
+    releaseContext(canvas, r);
+    assert.equal(cancelRelease(canvas), true);
+    await tick();
+    await tick();
+    assert.equal(r.lost, 0);
+    assert.equal(cancelRelease(canvas), false, "nothing left to cancel");
+  });
+
+  it("cancelling one canvas does not keep another's context alive", async () => {
+    const a = {};
+    const b = {};
+    const ra = fake();
+    const rb = fake();
+    releaseContext(a, ra);
+    releaseContext(b, rb);
+    cancelRelease(a);
+    await tick();
+    assert.equal(ra.lost, 0);
+    assert.equal(rb.lost, 1);
+  });
+
+  it("a release after a cancelled one is not swallowed", async () => {
+    const canvas = {};
+    const first = fake();
+    const second = fake();
+    releaseContext(canvas, first);
+    cancelRelease(canvas);
+    releaseContext(canvas, second);
+    await tick();
+    assert.equal(first.lost, 0);
+    assert.equal(second.lost, 1);
   });
 });

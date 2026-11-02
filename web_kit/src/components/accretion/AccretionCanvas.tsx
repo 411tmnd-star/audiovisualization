@@ -7,6 +7,7 @@ import { toAccretionParams, type AccretionParams } from "@/lib/accretion/params"
 import { AccretionScene, type AccretionView } from "@/lib/accretion/scene";
 import { GlHost } from "@/lib/gl/host";
 import type { GlStatus } from "@/lib/gl/state";
+import { useResponse } from "@/components/gl/response";
 import { useAudioFrame } from "@/lib/pipeline/react";
 
 /** Frame-timing history kept for diagnostics: the last RING frame intervals and drawing times, in milliseconds. */
@@ -70,6 +71,7 @@ export default function AccretionCanvas({ className = "", debugRef }: { classNam
     };
   }, [anim, debugRef, timing]);
 
+  const shape = useResponse();
   useAudioFrame((f) => {
     const host = hostRef.current;
     const scene = sceneRef.current;
@@ -81,7 +83,8 @@ export default function AccretionCanvas({ className = "", debugRef }: { classNam
     timing.last = t0;
 
     const reduced = host.reducedMotion;
-    const p = toAccretionParams(f, reduced);
+    const g = shape(f, dt);
+    const p = toAccretionParams(g, reduced);
     stepAccretionAnim(anim, p, dt, reduced);
 
     const w = canvas.clientWidth;
