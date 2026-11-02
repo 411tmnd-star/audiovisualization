@@ -29,7 +29,7 @@ export interface ResonatorDebug {
 /**
  * The Resonator scene on the shared WebGL host. One frame clock: it draws inside the audio pipeline's frame callback and
  * has no loop of its own. Per frame: pure params, then the stateful animator, then uniforms, then one draw.
- * Same wiring as SpectrumMatrixCanvas and ConstellationCoreCanvas (copied, not shared).
+ * Same wiring as ConstellationCoreCanvas (copied, not shared).
  */
 export default function ResonatorCanvas({ className = "", debugRef, quality = "full" }: { className?: string; debugRef?: { current: ResonatorDebug | null }; quality?: ResonatorQuality }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

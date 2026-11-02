@@ -10,10 +10,8 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "componen
 const read = (f: string) => readFileSync(join(SRC, f), "utf8");
 const SCENES: [string, string][] = [
   ["constellation-core/ConstellationCore.tsx", "constellation-core"],
-  ["spectrum-matrix/SpectrumMatrix.tsx", "spectrum-matrix"],
   ["resonator/Resonator.tsx", "resonator"],
   ["score/Score.tsx", "score"],
-  ["terrain/Terrain.tsx", "terrain"],
   ["chroma/Chroma.tsx", "chroma"],
   ["accretion/Accretion.tsx", "accretion"],
 ];
@@ -30,13 +28,12 @@ describe("every WebGL scene is shown on the shared stage", () => {
   }
 
   it("scenes whose composition reaches the bottom edge keep the transport strip free of the canvas", () => {
-    for (const f of ["score/Score.tsx", "terrain/Terrain.tsx"]) assert.ok(read(f).includes("reserveBottom"), f);
-    for (const f of ["constellation-core/ConstellationCore.tsx", "resonator/Resonator.tsx", "chroma/Chroma.tsx"]) assert.equal(read(f).includes("reserveBottom"), false, f);
+    assert.ok(read("score/Score.tsx").includes("reserveBottom"));
+    for (const f of ["constellation-core/ConstellationCore.tsx", "resonator/Resonator.tsx", "chroma/Chroma.tsx", "accretion/Accretion.tsx"]) assert.equal(read(f).includes("reserveBottom"), false, f);
   });
 
-  it("scene settings that rebuild the scene are in the panel for Score, Terrain, Resonator and Chroma", () => {
+  it("scene settings that rebuild the scene are in the panel for Score, Resonator and Chroma", () => {
     assert.ok(read("score/Score.tsx").includes('name="Overlay"'));
-    assert.ok(read("terrain/Terrain.tsx").includes('name="Overlay"'));
     assert.ok(read("resonator/Resonator.tsx").includes('name="Quality"'));
     assert.ok(read("chroma/Chroma.tsx").includes('name="Quality"'));
   });

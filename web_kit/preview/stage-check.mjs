@@ -16,9 +16,9 @@ import { launchGpu, sleep } from "./cdp-lib-gpu.mjs";
 const OUT = process.argv[2] || "../scratch_shots/stage";
 mkdirSync(OUT, { recursive: true });
 const BASE = `http://localhost:${process.env.STAGE_PORT || 5360}`;
-const SCENES = ["core", "matrix", "resonator", "score", "terrain", "chroma", "accretion"];
+const SCENES = ["core", "resonator", "score", "chroma", "accretion"];
 // Scenes that have panel settings, and the setting button that changes them.
-const SETTINGS = { score: "overlay:off", terrain: "overlay:off", resonator: "quality:lite", chroma: "quality:lite" };
+const SETTINGS = { score: "overlay:off", resonator: "quality:lite", chroma: "quality:lite" };
 const results = [];
 const check = (name, ok, detail = "") => {
   results.push({ name, ok, detail });

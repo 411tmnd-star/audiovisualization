@@ -22,10 +22,10 @@ const server = createServer((req, res) => {
 mkdirSync(outDir, { recursive: true });
 const SECONDS = 6;
 // Busy scenes (fine lines, particles) compress badly, so they get a smaller, lighter encode.
-const encode = { core: [12, 720, 128], accretion: [12, 720, 128], matrix: [8, 560, 128], squall: [8, 560, 48] };
+const encode = { core: [12, 720, 128], accretion: [12, 720, 128], squall: [8, 560, 48] };
 const b = await launchGpu({ port: 9611, width: 1000, height: 700 });
 await b.viewport(1000, 700, 1);
-for (const id of ["core", "matrix", "accretion", "squall"]) {
+for (const id of ["core", "accretion", "squall"]) {
   await b.goto(`http://localhost:8091/${id}/`, "!!document.querySelector('canvas')");
   await sleep(800);
   await b.js(`(() => { const el = document.querySelector('[data-source=demo]') || [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Demo'); if (el) el.click(); return !!el; })()`);

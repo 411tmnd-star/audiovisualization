@@ -27,7 +27,7 @@ export interface SceneStageProps {
   hint?: string;
   /** The scene's clear colour, so the stage edge is invisible. */
   background: string;
-  /** Keep the bottom strip free of the canvas, for scenes whose composition reaches the bottom edge (Score, Terrain). */
+  /** Keep the bottom strip free of the canvas, for scenes whose composition reaches the bottom edge (Score). */
   reserveBottom?: boolean;
   /** Scene-specific controls, shown in the panel. */
   settings?: ReactNode;
