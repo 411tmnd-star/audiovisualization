@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
 import ResonatorCanvas, { type ResonatorDebug } from "@/components/resonator/ResonatorCanvas";
-import { SourcePicker, Transport } from "@/components/pipeline/Controls";
+import SceneStage, { StageSeg } from "@/components/gl/SceneStage";
 import type { AudioPipeline } from "@/lib/pipeline";
-import { AudioPipelineProvider, useSceneState } from "@/lib/pipeline/react";
+import { AudioPipelineProvider } from "@/lib/pipeline/react";
 import type { ResonatorQuality } from "@/lib/resonator/scene";
 
 /**
@@ -19,30 +21,26 @@ export default function Resonator({ pipeline, debugRef, quality }: { pipeline?: 
 }
 
 function Shell({ debugRef, quality }: { debugRef?: { current: ResonatorDebug | null }; quality?: ResonatorQuality }) {
-  const scene = useSceneState();
+  const [level, setLevel] = useState<ResonatorQuality>(quality ?? "full");
   return (
-    <section
-      aria-labelledby="resonator-title"
-      data-scene={scene}
-      className="relative isolate flex min-h-[85vh] flex-col overflow-hidden rounded-3xl bg-[#02030a] text-slate-100 ring-1 ring-white/10"
+    <SceneStage
+      id="resonator"
+      title="Resonator"
+      tagline="A glass orb and plasma heart inside concentric fluid ribbons."
+      about="Bass pulses the glass orb and its plasma heart, mids lift the inner ribbons, highs ripple the outer ones and speed the beads. Detected onsets flash the gold tracks and burst the particles. Drag to orbit."
+      hint="Drag to orbit"
+      background="#02030a"
+      settings={
+        <StageSeg
+          name="Quality"
+          value={level}
+          options={[["full", "Full"], ["lite", "Lite"]]}
+          onChange={setLevel}
+          hint="Lite draws fewer particles for slower graphics. Changing it restarts the scene."
+        />
+      }
     >
-      <div className="relative min-h-[22rem] flex-1">
-        <div className="absolute inset-0">
-          <ResonatorCanvas debugRef={debugRef} quality={quality} />
-        </div>
-        <header className="pointer-events-none relative p-5 sm:p-6">
-          <h2 id="resonator-title" className="text-lg font-semibold tracking-tight">
-            Resonator
-          </h2>
-          <p className="max-w-md text-sm text-slate-300/90">
-            Bass pulses the glass orb and its plasma heart, mids lift the inner ribbons, highs ripple the outer ones and speed the beads. Detected onsets flash the gold tracks and burst the particles. Drag to orbit.
-          </p>
-        </header>
-      </div>
-      <div className="relative m-3 space-y-3 rounded-2xl border border-white/10 bg-black/45 p-4 backdrop-blur-md sm:m-5 sm:mt-0">
-        <SourcePicker />
-        <Transport />
-      </div>
-    </section>
+      <ResonatorCanvas debugRef={debugRef} quality={level} />
+    </SceneStage>
   );
 }

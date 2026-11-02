@@ -30,6 +30,9 @@ const map = {
   "/chroma": "preview/chroma.html",
   "/chroma.js": "preview/dist/chroma.js",
   "/chroma.css": "preview/dist/chroma.css",
+  "/strict": "preview/strict.html",
+  "/strict.js": "preview/dist/strict.js",
+  "/strict.css": "preview/dist/strict.css",
 };
 createServer(async (req, res) => {
   const p = decodeURIComponent(new URL(req.url, "http://x").pathname);
