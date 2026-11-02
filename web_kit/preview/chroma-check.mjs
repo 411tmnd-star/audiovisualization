@@ -205,17 +205,17 @@ try {
   // ------------------------------------------------------------------------------------------------------------------
   section("8. performance, lifecycle", "SYNTHETIC");
   const perf = {};
-  // Control: the same pacing measurement on Terrain (a scene known to hold 60 Hz on this machine earlier today) in the same session. If the
+  // Control: the same pacing measurement on Score (a light scene that held 60 Hz on the reference machine) in the same session. If the
   // control is itself throttled (battery saver, a 30 Hz display mode), the frame-pacing checks below cannot be judged and are INCONCLUSIVE.
   await b.viewport(1280, 720, 1);
-  await b.goto(URL_BASE + "/terrain?source=pattern", `!!(window.__terrain && window.__terrain.debug())`);
+  await b.goto(URL_BASE + "/score?source=pattern", `!!(window.__score && window.__score.debug())`);
   await sleep(2500);
-  await b.js(`window.__terrain.mark()`); await sleep(5000);
-  const ctlT = await b.js(`window.__terrain.timing()`);
+  await b.js(`window.__score.mark()`); await sleep(5000);
+  const ctlT = await b.js(`window.__score.timing()`);
   const batt = await b.js(`(navigator.getBattery ? navigator.getBattery().then((x) => ({ charging: x.charging, level: x.level })) : null)`);
-  measurements.environment = { controlTerrainIntervalMedian: ctlT.intervals.median, battery: batt };
+  measurements.environment = { controlScoreIntervalMedian: ctlT.intervals.median, battery: batt };
   const throttled = ctlT.intervals.median > 25;
-  console.log(`  control (Terrain) interval median ${f3(ctlT.intervals.median)} ms; battery ${JSON.stringify(batt)}${throttled ? "  -> THROTTLED: pacing checks are inconclusive" : ""}`);
+  console.log(`  control (Score) interval median ${f3(ctlT.intervals.median)} ms; battery ${JSON.stringify(batt)}${throttled ? "  -> THROTTLED: pacing checks are inconclusive" : ""}`);
   for (const [w, hgt, tag] of [[1280, 720, "720p"], [1920, 1080, "1080p"]]) {
     await b.viewport(w, hgt, 1);
     await b.goto(URL_BASE + "/chroma?source=pattern", ready);
@@ -237,7 +237,7 @@ try {
   // Bounds fixed BEFORE measuring (PROPOSED, not a platform budget): 60 Hz pacing held; main thread <= 2 ms; synchronous GPU <= 5 ms at 720p
   // (the same bounds Terrain and Score were held to; the synchronous read-back overstates real GPU time).
   const pf = perf["720p"];
-  const pace = (name, ok, detail) => (throttled ? unknown(name, `${detail}; the Terrain control in this session measured ${f3(ctlT.intervals.median)} ms (throttled)`) : check(name, ok, detail));
+  const pace = (name, ok, detail) => (throttled ? unknown(name, `${detail}; the Score control in this session measured ${f3(ctlT.intervals.median)} ms (throttled)`) : check(name, ok, detail));
   pace("720p: frame interval median <= 20 ms, under 2% of frames over 33 ms", pf.interval.median <= 20 && pf.interval.over33 < 0.02, `median ${f3(pf.interval.median)} over33 ${f3(pf.interval.over33)}`);
   check("720p: main-thread cost per frame median <= 2 ms", pf.cpu.median <= 2, `${f3(pf.cpu.median)} ms`);
   check("720p: synchronous GPU time median <= 5 ms", pf.gpuSync.median <= 5, `${f3(pf.gpuSync.median)} ms`);

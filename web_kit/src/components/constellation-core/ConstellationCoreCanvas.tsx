@@ -7,6 +7,7 @@ import { toCoreParams, type CoreParams } from "@/lib/constellation-core/params";
 import { ConstellationCoreScene, type CoreView } from "@/lib/constellation-core/scene";
 import { GlHost } from "@/lib/gl/host";
 import type { GlStatus } from "@/lib/gl/state";
+import { useResponse } from "@/components/gl/response";
 import { useAudioFrame } from "@/lib/pipeline/react";
 
 /** Frame-timing history kept for diagnostics: the last RING frame intervals and drawing times, in milliseconds. */
@@ -75,6 +76,7 @@ export default function ConstellationCoreCanvas({ className = "", debugRef }: { 
     };
   }, [anim, debugRef, timing]);
 
+  const shape = useResponse();
   useAudioFrame((f) => {
     const host = hostRef.current;
     const scene = sceneRef.current;
@@ -86,7 +88,8 @@ export default function ConstellationCoreCanvas({ className = "", debugRef }: { 
     timing.last = t0;
 
     const reduced = host.reducedMotion;
-    const p = toCoreParams(f, reduced);
+    const g = shape(f, dt);
+    const p = toCoreParams(g, reduced);
     stepCoreAnim(anim, p, dt, reduced);
 
     const w = canvas.clientWidth;

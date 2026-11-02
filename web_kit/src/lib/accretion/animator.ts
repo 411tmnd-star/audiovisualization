@@ -13,8 +13,8 @@ import type { AccretionParams } from "./params";
  */
 
 /** Envelope attack and release (seconds to about 63%). Short attack keeps hits readable; longer release avoids flicker. */
-export const ATTACK_S = 0.08;
-export const RELEASE_S = 0.4;
+export const ATTACK_S = 0.03;
+export const RELEASE_S = 0.22;
 /** Under reduced motion every envelope rises slowly too, so no change is abrupt. */
 export const REDUCED_ATTACK_S = 0.35;
 /** Jet impulse decay time constant. */

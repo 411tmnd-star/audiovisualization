@@ -8,6 +8,7 @@ import { toScoreParams, type ScoreParams } from "@/lib/score/params";
 import { ScoreScene } from "@/lib/score/scene";
 import { GlHost } from "@/lib/gl/host";
 import type { GlStatus } from "@/lib/gl/state";
+import { useResponse } from "@/components/gl/response";
 import { useAudioFrame, useAudioPipeline } from "@/lib/pipeline/react";
 
 /** Frame-timing history kept for diagnostics: the last RING frame intervals and drawing times, in milliseconds. */
@@ -79,6 +80,7 @@ export default function ScoreCanvas({ className = "", debugRef, decor = true }: 
     };
   }, [anim, debugRef, history, timing, decor]);
 
+  const shape = useResponse();
   useAudioFrame((f) => {
     const host = hostRef.current;
     const scene = sceneRef.current;
@@ -94,8 +96,9 @@ export default function ScoreCanvas({ className = "", debugRef, decor = true }: 
       if (lastSource.current !== undefined) history.reset();
       lastSource.current = pipeline.source;
     }
-    const p = toScoreParams(f, host.reducedMotion);
-    history.push(f);
+    const g = shape(f, dt);
+    const p = toScoreParams(g, host.reducedMotion);
+    history.push(g);
     stepScoreAnim(anim, p, f.time, dt);
 
     const w = canvas.clientWidth;

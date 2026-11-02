@@ -7,6 +7,7 @@ import { toResonatorParams, type ResonatorParams } from "@/lib/resonator/params"
 import { ResonatorScene, type ResonatorQuality, type ResonatorView } from "@/lib/resonator/scene";
 import { GlHost } from "@/lib/gl/host";
 import type { GlStatus } from "@/lib/gl/state";
+import { useResponse } from "@/components/gl/response";
 import { useAudioFrame } from "@/lib/pipeline/react";
 
 /** Frame-timing history kept for diagnostics: the last RING frame intervals and drawing times, in milliseconds. */
@@ -75,6 +76,7 @@ export default function ResonatorCanvas({ className = "", debugRef, quality = "f
     };
   }, [anim, debugRef, timing, quality]);
 
+  const shape = useResponse();
   useAudioFrame((f) => {
     const host = hostRef.current;
     const scene = sceneRef.current;
@@ -86,7 +88,8 @@ export default function ResonatorCanvas({ className = "", debugRef, quality = "f
     timing.last = t0;
 
     const reduced = host.reducedMotion;
-    const p = toResonatorParams(f, reduced);
+    const g = shape(f, dt);
+    const p = toResonatorParams(g, reduced);
     stepResonatorAnim(anim, p, dt, reduced);
 
     const w = canvas.clientWidth;

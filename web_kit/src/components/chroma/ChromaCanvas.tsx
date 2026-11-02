@@ -8,6 +8,7 @@ import { toChromaParams, type ChromaParams } from "@/lib/chroma/params";
 import { ChromaScene } from "@/lib/chroma/scene";
 import { GlHost } from "@/lib/gl/host";
 import type { GlStatus } from "@/lib/gl/state";
+import { useResponse } from "@/components/gl/response";
 import { useAudioFrame, useAudioPipeline } from "@/lib/pipeline/react";
 
 /** Frame-timing history kept for diagnostics: the last RING frame intervals and drawing times, in milliseconds. */
@@ -76,6 +77,7 @@ export default function ChromaCanvas({ className = "", debugRef, quality = "full
     };
   }, [anim, debugRef, timing, quality]);
 
+  const shape = useResponse();
   useAudioFrame((f) => {
     const host = hostRef.current;
     const scene = sceneRef.current;
@@ -91,7 +93,8 @@ export default function ChromaCanvas({ className = "", debugRef, quality = "full
       if (lastSource.current !== undefined) resetChromaAnim(anim);
       lastSource.current = pipeline.source;
     }
-    const p = toChromaParams(f, host.reducedMotion);
+    const g = shape(f, dt);
+    const p = toChromaParams(g, host.reducedMotion);
     stepChromaAnim(anim, p, dt);
 
     const w = canvas.clientWidth;

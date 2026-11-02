@@ -1,7 +1,7 @@
 # 411 AUDIOLAB: Visual Systems (governing specification)
 
 The living source of truth for the ten-visual portfolio. Loaded into every Claude Code session through the root `CLAUDE.md`.
-Update sections in place; never regenerate the whole file. Last full update: 2026-11-02 (Spectrum Matrix and Terrain removed, section 13.7; shared scene stage and the `GlHost` StrictMode fix, section 13; earlier: Score baseline, contracts #5-#10, Terrain, Chroma).
+Update sections in place; never regenerate the whole file. Last full update: 2026-11-02 (audio response research, shaping and gains, section 14; Spectrum Matrix and Terrain removed, section 13.7; shared scene stage and the `GlHost` StrictMode fix, section 13; earlier: Score baseline, contracts #5-#10, Terrain, Chroma).
 
 ## 0. The role: Visual Systems Director
 
@@ -173,7 +173,7 @@ Targeted verification only. Labels: **OV** observed and verified in this pass; *
 
 **Recommendation (provisional until the checklist is done).** ACCEPT WITH LIMITATIONS: all automated evidence passes and nothing shared changed; the limitations are no audible verification, no Next route run, the shared StrictMode defect, and the scene-local history rule (7.3).
 
-## 8. Engineering lessons (1-7 justified by Score, 8-13 by Terrain, 14 by the shared stage)
+## 8. Engineering lessons (1-7 justified by Score, 8-13 by Terrain, 14 by the shared stage, 15-16 by the response work)
 
 1. **Frames are per-draw objects without sequence.** Any consumer that records history must key to the playhead, dedupe by identity, and test the repeat-delivery cases (the mount re-delivery, the idle frame).
 2. **Verify the probe before the scene.** WebGL `readPixels` is bottom-up; a flipped probe produced eleven false failures. Test a measurement against a known signal first.
@@ -190,6 +190,8 @@ Targeted verification only. Labels: **OV** observed and verified in this pass; *
 13. **Prove motion against the projection, not against a guess.** Locating a stored feature, projecting its world position with the page's own camera, and comparing at several instants verified the time-to-distance mapping on real pixels (within 15 px; steps within about 1.5 px of prediction) without needing to watch the motion. Scope: any scene that maps time to space.
 
 14. **A criterion measured on a pixel region depends on the region's shape.** Moving the scenes to a full-viewport stage changed the canvas from about 1248x563 to 1248x868, and two per-scene checks that read luminance or coverage moved with it (13.4). Re-run every scene's checks when the frame a scene is drawn in changes, and do not read a shape-dependent bound as a defect in the scene or as licence to move the bound. Scope: any layout change around a canvas.
+15. **A pre-registered criterion encodes an identity; ask what it protects before moving it.** Making Resonator respond faster broke two of its own criteria (no one-frame orb jump over 0.25; a restrained orb swell). The first reaction, moving the bound, was wrong: both protect its fluid character. The design that kept both (a gentle level path, a sharp strike through the existing instant `kick` channel, faster ribbons) was better than the one that moved them. Scope: any scene-level tuning.
+16. **A better signal is not a better picture; measure at both.** The response audit showed the signals responding 2 to 4 times better while the real renderer's brightness swing rose only 0 to 40%, because the scenes' own mapping gains were timid (a 4% core swell). Measure the signal (fast, exact) and the pixels (slow, what the viewer sees), and fix whichever is the limit. Scope: audio-reactive work.
 
 ## 9. Starting a new scene (checklist)
 
@@ -490,3 +492,49 @@ Scene-local presentation changes only (Class A); no audio mapping, history, geom
 ### 13.7 Removal of Spectrum Matrix (#1) and Terrain with Memory (#5) (2026-11-02)
 
 On the owner's instruction after the 13.6 refinement ("Delete both, let's focus on the visuals we have"), both scenes were deleted: `lib`, `components`, `app/lab` pages, preview entries and check scripts, seven unit-test files, `designs/spectrum-matrix` and `designs/terrain`, the README clip, and their entries in the preview build, server, site build and stage check. This overrides the accepted-identity rule on the owner's authority (Class C, done at the owner's explicit direction). The shared AudioLab inspection that the registry cites was kept and moved to `docs/visual-systems/evidence/`. Recoverable from git history. Registry numbers 1 and 5 are retired, not reused. Verification after removal: `tsc` clean, 383 tests pass (494 before; the difference is the deleted scenes' tests). Lessons 8-13 stay (they are general); the Terrain-specific sections are kept as a dated record and marked.
+
+## 14. Audio response: research, shaping and larger gains (2026-11-02)
+
+Owner request: after the removal in 13.7, "push [the visuals we have] to max, make them visually able to respond to sound better; on each do a research first and deep think". Full research, per-scene reasoning, tables and the before/after numbers: [`evidence/audio-response-research-2026-11-02.md`](evidence/audio-response-research-2026-11-02.md); raw audits in `evidence/response-audit-{before,after}-2026-11-02.json`. Labels as in section 11.
+
+### 14.1 What the research and the audit found (Observed)
+
+External research: a visual that trails the sound is judged out of sync from about 75 ms (a sound leading its picture is detected at 65 to 111 ms; music's just-noticeable difference is about 100 to 130 ms), while a picture that leads is tolerated up to about 190 ms; envelope followers should attack fast and release slowly; visualizers that stay lively across songs normalise each band against its recent peak. The audit of the scenes' own animators on Detty's real analysis, before any change: rise to 90% of a step 167 to 283 ms, lag 50 to 100 ms, the mid band spanning 0.19 of its range so mid-driven motion moved 0.11, transients through at 0.53 to 0.57, and mapping gains of 4 to 7% (Core's core swell 4%).
+
+### 14.2 What changed (Class A and B; no contract, `GlHost` or identity change)
+
+`web_kit/src/lib/audio/shaping.ts` (new): a response shaper in front of each scene's pure `toXParams`: per-band **auto-gain** (floor and ceiling tracked, expansion capped at about 4.5x, scaled by the variation the band has shown so a constant signal is shown as it is, silence stays silent, frozen while paused) and per-band **punch** (the band's positive rate of rise against its own recent peak rate, instant attack, 120 ms decay). `components/gl/response.tsx` (new): the `useResponse()` hook and a context; `SceneStage` offers **Response: Tuned / Raw** in the Controls panel (default Tuned). Core, Resonator, Accretion, Chroma and Score shape each frame before mapping it; each scene uses punch its own way (14.3 in the research note): Core swell, orbit surge, orb flicker; Resonator kick strike, ribbon lift, ripple; Accretion ring flare, disk surge, detail flicker; Chroma expansion, turbulence, sparkle; Score uses the gain only. Scene envelopes: attack 70 to 80 ms to 30 ms, release 400 to 450 ms to 220 to 250 ms (Resonator's orb attack 60 ms, its ribbons 30 ms). Larger visible gains: Core core swell 4% to 14% plus a 3% camera breath and orb size flicker (each orb keeps its own base size); Resonator orb swell 7% to 10%, kick 5% to 10%, halo; Accretion disk brightness mix 0.6/0.4 to 0.4/0.6. **Not changed:** Squall (own simulation and forecast; a separate decision), any scene's identity, hierarchy or negative design, the audio contract, `GlHost`.
+
+### 14.3 Decisions
+
+| # | Decision | Alternatives | Reason |
+|---|---|---|---|
+| R1 | Shape the frame in front of `toXParams`, in one scene-agnostic module | Retune every mapping by hand; add features to the contract (Class C) | Params stay pure; every scene gains the same measured fix; the contract is untouched |
+| R2 | Punch is per band, from the band's rise against its own peak rate | A global onset flag only (what existed) | Mid and high had no transient channel; snares and hats could not strike anything |
+| R3 | Expansion scaled by observed variation; start with no assumed range | Fixed range, or always normalise | A constant signal (and the synthetic probes) must not drift to the top; noise must not be amplified. Found when a Chroma probe drifted (first version) |
+| R4 | Resonator keeps a fluid orb, strikes through `kick`, and its ribbons attack faster | One fast attack for the whole scene | Its pre-registered criteria (no one-frame jump over 0.25, restrained swell 1.03 to 1.12) encode its identity (lesson 15) |
+| R5 | A Tuned / Raw toggle in the stage | Always tuned | The owner can compare, and the old behaviour stays reachable |
+
+### 14.4 Thresholds and tests (nothing weakened)
+
+`SPAN_MIN` 0.28 to 0.22 after the first unit test measured a shaped spread of exactly 0.60 against a pre-written bound of 0.6 for a band spanning about 0.19 (a design change; the bound is unchanged). A Resonator unit test bound (one-frame step 0.25) was moved to 0.5 for about an hour and **restored**; the browser checks "no frame jumps more than 0.25" and "restrained swell (1.03 to 1.12)" were not moved either; the design was changed to meet them (14.3 R4). The Chroma check's frame-rate control page was Terrain; Terrain was deleted, the check crashed, and the control is now Score (a control, not a threshold). One Chroma check, "exposure only ... centroid moves under 1%", reads 0.010 to 0.013: it is a **flaky probe**, measured on the committed build and the new build alike (8 samples each: 0.003 to 0.013, one above 1% in each); the bound is unchanged.
+
+### 14.5 Verification record (2026-11-02; software WebGL in a Linux container, Detty on a silent clock)
+
+| Check | Result |
+|---|---|
+| `tsc --noEmit` | exit 0 |
+| `npm test` | 406 tests, 0 fail (383 after the removal; +16 shaper tests, +1 constant-signal test, +6 stage tests) |
+| Shaper properties | silence stays silent; a narrow band is expanded (spread above 0.6 from about 0.18); gain bounded; a constant signal is shown as it is; adaptation frozen while paused; a rise registers in its first frame and decays; steady and falling levels carry no punch; deterministic; same input object gives the same output object; invalid numbers bounded |
+| `response-audit.ts` (Detty, 100 s, 60 fps) | before and after in the table of the research note: rise to 90% 167 to 283 ms to 83 ms (Resonator orb 150 ms by design); lag 50 to 100 ms to 17 ms; mid range 0.11 to 0.31 to 0.35; transient fidelity 0.53 to 0.57 to 0.65 to 0.88 |
+| Picture level, real renderer (48 screenshots per scene, final build against the pre-work build) | brightness swing 1.8x Core, 1.6x Resonator, 1.55x Accretion, 1.2x Chroma, 1.0x Score; frame-to-frame change 1.2x to 1.8x; not time-aligned |
+| `stage-check.mjs` | 88/88 (5 scenes, StrictMode mount, Response toggle, panel and phone layout) |
+| `score-check.mjs` | 47/50; the three failures are frame pacing at 20.6 to 22.6 ms against 20 ms (environment) |
+| `chroma-check.mjs` | 37/41: the flaky exposure probe (14.4) and three pacing and GPU-time failures (environment), as before |
+| `resonator-check.mjs` | 32/46 against 33/46 for the pre-work code in the same environment (31 to 35 across runs); two checks that fail now and did not on the pre-work run (kick peak, silence mean luminance) are the canvas-shape and frame-rate effects of the stage, recorded in 13.4 |
+| Constellation Core, Accretion browser checks | **Not run** (they require a hardware GPU) |
+| Audible check | **Unverified**: Detty ships no audio; nobody has judged whether the response feels in time on a real track |
+
+### 14.6 Limitations and proposals (Proposed)
+
+1. Nothing was heard; the picture-level measure is brightness only and the runs are not frame-aligned. 2. Photosensitivity: the existing flash limits (3 per second) are unchanged, but faster attacks and larger gains make hits sharper, and no one has reviewed the scenes for photosensitive risk with the new response. 3. Squall was not changed. 4. Score's high trace, now carrying real amplitude, can look scattered at its peaks (the known alternating encoding, 7.8). 5. **Proposed, Class C:** a lookahead of 50 to 100 ms for offline songs (a visual that leads the sound is the forgiving direction, so impacts could land on the beat; the sync nudge is the owner-controlled version today); richer bands and continuous features in the contract (sub-bass, low-mid, presence, spectral centroid and flux); a frame sequence number (also the limit in 7.3). 6. Owner decision: judge Tuned against Raw on a real track, then accept, adjust the gains per scene, or return.

@@ -77,11 +77,18 @@ try {
     await sleep(300);
     const rail = await b.js(`(() => {
       const r = document.querySelector('[data-rail]'); if (!r) return null; const q = r.getBoundingClientRect();
-      return { l: q.left, r: q.right, t: q.top, b: q.bottom, vw: innerWidth, vh: innerHeight, sources: [...r.querySelectorAll('[data-source]')].map((x) => x.dataset.source), nudge: !!r.querySelector('#stage-nudge'), settings: [...r.querySelectorAll('[data-setting]')].map((x) => x.dataset.setting) };
+      return { l: q.left, r: q.right, t: q.top, b: q.bottom, vw: innerWidth, vh: innerHeight, sources: [...r.querySelectorAll('[data-source]')].map((x) => x.dataset.source), nudge: !!r.querySelector('#stage-nudge'), settings: [...r.querySelectorAll('[data-setting]')].map((x) => x.dataset.setting).filter((x) => !x.startsWith('response:')) };
     })()`);
     check(`${scene}: controls panel opens inside the viewport`, !!rail && rail.l >= 0 && rail.r <= rail.vw && rail.t >= 0 && rail.b <= rail.vh, JSON.stringify(rail));
     check(`${scene}: panel lists the sources, the sync nudge`, !!rail && rail.sources.includes("demo") && rail.sources.includes("mic") && rail.nudge, rail ? rail.sources.join(",") : "no rail");
     await b.shot(join(OUT, `${scene}-panel.png`));
+
+    // The response toggle exists on every scene and does not rebuild it.
+    check(`${scene}: panel carries the Response toggle (Tuned / Raw)`, (await b.js("!!document.querySelector('[data-rail] [data-setting=\"response:tuned\"]') && !!document.querySelector('[data-rail] [data-setting=\"response:raw\"]')")) === true);
+    await b.js("document.querySelector('[data-setting=\"response:raw\"]').click()");
+    await sleep(500);
+    check(`${scene}: switching to Raw keeps the scene ready and playing`, (await b.js("document.querySelector('[data-gl-status]').dataset.glStatus")) === "ready" && (await b.js("document.querySelector('[data-play]').getAttribute('aria-pressed')")) === "true");
+    await b.js("document.querySelector('[data-setting=\"response:tuned\"]').click()");
 
     // Scene settings rebuild the scene, which must come back ready (a rebuild is a second host on the same canvas element).
     if (SETTINGS[scene]) {

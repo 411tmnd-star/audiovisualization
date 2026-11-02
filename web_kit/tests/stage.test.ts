@@ -39,6 +39,16 @@ describe("every WebGL scene is shown on the shared stage", () => {
   });
 });
 
+describe("every scene reads the shaped response", () => {
+  for (const [file] of [["constellation-core/ConstellationCoreCanvas.tsx"], ["resonator/ResonatorCanvas.tsx"], ["accretion/AccretionCanvas.tsx"], ["chroma/ChromaCanvas.tsx"], ["score/ScoreCanvas.tsx"]]) {
+    it(`${file} shapes the frame before mapping it`, () => {
+      const s = read(file);
+      assert.ok(s.includes("useResponse()") && s.includes("shape(f, dt)"));
+      assert.equal(/to\w+Params\(f,/.test(s), false, "params are built from the shaped frame, not the raw one");
+    });
+  }
+});
+
 describe("the stage keeps the hooks the checks and the pipeline rely on", () => {
   const stage = read("gl/SceneStage.tsx");
   it("exposes the selectors the browser checks use", () => {
@@ -49,6 +59,9 @@ describe("the stage keeps the hooks the checks and the pipeline rely on", () => 
   });
   it("puts the canvas first in the document order inside the stage (checks read the first canvas)", () => {
     assert.ok(stage.indexOf("{children}") < stage.indexOf("data-transport"));
+  });
+  it("offers the Response toggle and provides it to the scene", () => {
+    assert.ok(stage.includes('name="Response"') && stage.includes("ResponseContext.Provider"));
   });
   it("does not draw or schedule frames itself", () => {
     for (const f of ["requestAnimationFrame(", "setInterval("]) assert.equal(stage.includes(f), false, f);

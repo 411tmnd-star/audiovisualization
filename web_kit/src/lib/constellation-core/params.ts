@@ -1,3 +1,4 @@
+import { punchOf } from "../audio/shaping";
 import { SCENE_STATES, clamp01, type AudioFeatureFrame, type SceneState } from "../pipeline/contract";
 
 /**
@@ -26,6 +27,10 @@ export const CALM_MOTION = 0.25;
 export const REDUCED_MOTION = 0.35;
 /** Overall energy below this counts as silence. */
 export const SILENCE_RMS = 0.04;
+/** How much of each band's transient is added to the signal it drives. */
+export const PUNCH_SWELL = 0.3;
+export const PUNCH_ORBIT = 0.35;
+export const PUNCH_SHIMMER = 0.5;
 
 export interface CoreParams {
   /** Core swell (bass). The renderer scales the core by 1 + k * swell. */
@@ -65,13 +70,16 @@ export function toCoreParams(f: AudioFeatureFrame, reduced: boolean): CoreParams
   const motion = (calm ? CALM_MOTION : 1) * (reduced ? REDUCED_MOTION : 1);
   // Beam surges and ring pulses are pulses, so they are removed in silence and under reduced motion.
   const pulses = !calm && !reduced;
+  // Per-band transients (see audio/shaping.ts): the core snaps on a kick, the orbits surge on a mid hit, the shimmer flickers on a high one.
+  const pn = punchOf(f);
+  const k = pulses ? 1 : 0;
   const scene = (SCENE_STATES as readonly string[]).includes(f.currentSceneState) ? f.currentSceneState : "rest";
   return {
-    swell: bass,
+    swell: unit(bass + PUNCH_SWELL * pn.bass * k),
     glow: unit(REST_GLOW + (1 - REST_GLOW) * bass),
-    orbitSpeed: unit((REST_SPIN + (1 - REST_SPIN) * mid) * motion),
+    orbitSpeed: unit((REST_SPIN + (1 - REST_SPIN) * unit(mid + PUNCH_ORBIT * pn.mid * k)) * motion),
     colour: mid,
-    shimmer: unit(high * motion),
+    shimmer: unit((high + PUNCH_SHIMMER * pn.high * k) * motion),
     exposure: unit(REST_EXPOSURE + (1 - REST_EXPOSURE) * rms),
     beam: pulses ? unit(f.bassHit) : 0,
     pulse: pulses && f.beatDetected === true ? unit(f.onsetStrength) : 0,

@@ -1,3 +1,4 @@
+import { punchOf } from "../audio/shaping";
 import { SCENE_STATES, clamp01, type AudioFeatureFrame, type SceneState } from "../pipeline/contract";
 
 /**
@@ -32,6 +33,10 @@ export const CALM_MOTION = 0.25;
 export const REDUCED_MOTION = 0.35;
 /** Overall energy below this counts as silence. */
 export const SILENCE_RMS = 0.04;
+/** How much of each band's transient is added to the signal it drives. */
+export const PUNCH_KICK = 0.9;
+export const PUNCH_RISE = 0.4;
+export const PUNCH_RIPPLE = 0.5;
 
 export interface ResonatorParams {
   /** Orb scale pulse (bass). The scene scales the glass orb by 1 + k * swell. */
@@ -81,20 +86,24 @@ export function toResonatorParams(f: AudioFeatureFrame, reduced: boolean): Reson
   const motion = (calm ? CALM_MOTION : 1) * (reduced ? REDUCED_MOTION : 1);
   // Kicks, flashes and bursts are impulses, so they are removed in silence and under reduced motion.
   const impulses = !calm && !reduced;
+  // Per-band transients (see audio/shaping.ts): the orb kicks on a bass hit, the inner ribbons lift on a mid hit, the outer ripple and beads spike on a high one.
+  const pn = punchOf(f);
+  const k = impulses ? 1 : 0;
   const onset = impulses && f.beatDetected === true ? unit(f.onsetStrength) : 0;
   const scene = (SCENE_STATES as readonly string[]).includes(f.currentSceneState) ? f.currentSceneState : "rest";
   return {
     swell: bass,
     glow: unit(REST_GLOW + (1 - REST_GLOW) * bass),
-    rise: mid,
-    radial: mid,
-    ripple: unit(high * motion),
-    rippleRate: unit(high * motion),
-    beadSpeed: unit((REST_BEAD_SPEED + (1 - REST_BEAD_SPEED) * high) * motion),
+    rise: unit(mid + PUNCH_RISE * pn.mid * k),
+    radial: unit(mid + PUNCH_RISE * 0.6 * pn.mid * k),
+    ripple: unit((high + PUNCH_RIPPLE * pn.high * k) * motion),
+    rippleRate: unit((high + PUNCH_RIPPLE * 0.6 * pn.high * k) * motion),
+    beadSpeed: unit((REST_BEAD_SPEED + (1 - REST_BEAD_SPEED) * unit(high + 0.5 * pn.high * k)) * motion),
     exposure: unit(REST_EXPOSURE + (1 - REST_EXPOSURE) * rms),
     atmosphere: unit(REST_ATMOSPHERE + (1 - REST_ATMOSPHERE) * rms),
     bloom: rms,
-    kick: impulses ? unit(f.bassHit) : 0,
+    // A bass hit strikes the orb through the instant kick channel (bassHit, or the bass transient when bassHit is quiet); the level path stays fluid.
+    kick: impulses ? unit(Math.max(f.bassHit, PUNCH_KICK * pn.bass)) : 0,
     flash: onset,
     burst: onset,
     sceneLevel: SCENE_LEVEL[scene as SceneState],

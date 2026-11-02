@@ -60,8 +60,8 @@ export const FIT_HALF_WIDTH = 9.8;
 /** Fraction of the half vertical field of view the near edge of the outer ribbon may use. */
 export const FIT_VERTICAL = 0.85;
 /** Orb scale at full bass and at a full bass hit, as a fraction. */
-const ORB_SWELL = 0.07;
-const ORB_KICK = 0.05;
+const ORB_SWELL = 0.10;
+const ORB_KICK = 0.10;
 /** Warm point light in the heart, in candela-like units (three.js physical lights). */
 const LIGHT_BASE = 1.2;
 const LIGHT_GAIN = 5;
@@ -443,7 +443,7 @@ export class ResonatorScene {
     this.filaments[1].rotation.y = -a.flow * 0.5;
     this.light.intensity = LIGHT_BASE + LIGHT_GAIN * a.glow * (1 + 0.5 * a.kick);
     this.halo.quaternion.copy(this.camera.quaternion);
-    this.halo.scale.setScalar(HALO_SIZE * (1 + 0.08 * a.swell));
+    this.halo.scale.setScalar(HALO_SIZE * (1 + 0.16 * a.swell + 0.1 * a.kick));
   }
 
   /**

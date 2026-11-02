@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode } from "react";
 
+import { ResponseContext } from "@/components/gl/response";
 import { usePipelineSources } from "@/components/gl/usePipelineSources";
 import { useAudioFrame, useAudioPipeline, usePipelineState, useSceneState } from "@/lib/pipeline/react";
 
@@ -55,6 +56,7 @@ export default function SceneStage({ id, title, tagline, about, hint, background
   const [fullscreen, setFullscreen] = useState(false);
   const [idle, setIdle] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [tuned, setTuned] = useState(true);
 
   const hasSource = state.source !== null;
   // A source that failed to start can still report "playing"; do not show it as playing.
@@ -149,7 +151,7 @@ export default function SceneStage({ id, title, tagline, about, hint, background
       className={`relative isolate h-[calc(100svh-2rem)] min-h-[32rem] overflow-hidden text-slate-100 ${fullscreen ? "!h-screen" : "rounded-2xl ring-1 ring-white/10"} ${className}`}
     >
       <div className={`absolute inset-x-0 top-0 ${reserveBottom ? "bottom-[5.25rem] sm:bottom-[5.5rem]" : "bottom-0"}`} data-stage-canvas>
-        {children}
+        <ResponseContext.Provider value={{ tuned }}>{children}</ResponseContext.Provider>
       </div>
 
       {/* ---- title, band meters, top left ---- */}
@@ -201,6 +203,13 @@ export default function SceneStage({ id, title, tagline, about, hint, background
                 <SourceButtons src={src} compact />
               </div>
             </div>
+            <StageSeg
+              name="Response"
+              value={tuned ? "tuned" : "raw"}
+              options={[["tuned", "Tuned"], ["raw", "Raw"]]}
+              onChange={(v) => setTuned(v === "tuned")}
+              hint="Tuned stretches each band to this song's own range and adds a sharp response to hits. Raw uses the levels as analysed."
+            />
             {settings}
             <SyncNudge />
             <p className="border-t border-white/10 pt-3 text-[11px] leading-relaxed text-slate-500">
